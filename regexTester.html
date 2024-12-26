@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offline Regex Tester</title>
+    <style>
+        /* css reset */
+        html {
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+
+        *,
+        *:before,
+        *:after {
+            box-sizing: inherit;
+        }
+
+        body,
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6,
+        p,
+        ol,
+        ul {
+            margin: 0;
+            padding: 0;
+            font-weight: normal;
+        }
+
+        ol,
+        ul {
+            list-style: none;
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+        /* css reset */
+         html{
+            background-color: whitesmoke;
+         }
+
+        main,
+        #testStringContainer {
+            display: flex;
+            flex-direction: column;
+        }
+
+        main>* {
+            margin-top: 1em;
+        }
+
+        label {
+            font-family: Arial, Helvetica, sans-serif;
+            font-weight: bold;
+            font-size: 0.8rem;
+        }
+        ul{
+        list-style: disc;  
+        list-style-position: inside;
+        }
+
+        textarea,
+        .output {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1em;
+            border: 2px solid lightgray;
+            height: 4em;
+            background-color: white;
+        }
+        #testString{
+            height: 14em;
+        }
+        
+
+        #regex {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1em;
+            min-width: 70%;
+        }
+        .mono{
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1em;
+        }
+       
+        .highlight-green {
+            background-color: greenyellow;
+        }
+
+        .highlight-yellow {
+            background-color: yellow;
+        }
+        h1{
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 1.3em;
+        }
+
+        /* KEEP TOGETHER */
+        h1,input:not(.mono),textarea,.output,label:not(.mono){
+            margin-left:10px;
+            margin-right: 10px;
+        }
+        #regex{
+            margin-right: 0;
+        }
+        /* KEEP TOGETHER */
+    </style>
+</head>
+<body>
+    <h1>Regex Tester</h1>
+    <main>
+        <div>
+            <label for="regex">Regular Expression:</label><br>
+            <input type="text" id="regex" placeholder="e.g. (\\d+)-(\\w+)"><label class="mono" for="global">/g</label><input
+                class="mono" type="checkbox" id="global"><label class="mono" for="case-insensitive">/i</label><input class="mono" type="checkbox"
+                id="case-insensitive">
+        </div>
+        <div id="testStringContainer">
+            <label for="testString">Test String:</label>
+            <textarea id="testString" placeholder="Test data here."></textarea>
+        </div>
+        <div>
+            <label for="output">Match Results</label>
+            <div class='output' id="output"></div>
+        </div>
+        <div>
+            <label for="captureOutput">Capture Groups</label>
+            <div class="output" id="captureOutput"></div>
+            <div class="output" id="captureGroupsList"></div>
+        </div>
+    </main>
+    <script>
+        document.getElementById('regex').addEventListener('input', showCaptureResults);
+        document.getElementById('regex').addEventListener('input', showMatchResult);
+        document.getElementById('testString').addEventListener('input', showCaptureResults);
+        document.getElementById('testString').addEventListener('input', showMatchResult);
+        document.getElementById("global").addEventListener('input', showMatchResult);
+        document.getElementById("case-insensitive").addEventListener('input', showMatchResult);
+        document.getElementsByTagName('h1')[0].addEventListener("click",()=>alert(license));
+        showMatchResult();
+        showCaptureResults();
+        function showCaptureResults() {
+            const regexInput = document.getElementById('regex').value;
+            const testString = document.getElementById('testString').value;
+            const outputDiv = document.getElementById('captureOutput');
+            const groupsListDiv = document.getElementById('captureGroupsList');
+            let regex;
+            let match;
+            if (isValidRegex(regexInput)) {
+                let flags="";
+                if (document.getElementById("global").checked){
+                    flags+="g";
+                }
+                if (document.getElementById("case-insensitive").checked){
+                    flags+="i";
+                }
+                regex = new RegExp(regexInput,flags);
+                match = regex.exec(testString);
+            }
+            else {
+                clearResults();
+                return;
+            }
+            if ((match !== null) && (match.length > 1)) {//match found with capture group
+                let highlightedString = testString;
+                match.forEach((group, index) => {
+                    if (index > 0) {
+                        highlightedString = highlightedString.replaceAll(group, `<span class="highlight-green">${group}</span>`);
+                    }
+                });
+                outputDiv.innerHTML = highlightedString;
+
+                let groupsList = '<ul>';
+                for (let i = 1; i < match.length; i++) {
+                    groupsList += `<li>${match[i]}</li>`;
+                }
+                groupsList += '</ul>';
+                groupsListDiv.innerHTML = groupsList;
+            } else {
+                clearResults();
+            }
+        };
+        function isValidRegex(string) {
+            try {
+                new RegExp(string);
+                return true;
+            } catch (e) {
+                console.log(e);
+                return false;
+            }
+        }
+
+        function clearResults() {
+            document.getElementById('captureOutput').innerHTML = "";
+            document.getElementById('captureGroupsList').innerHTML = "";
+        }
+
+        function showMatchResult() {
+            let regexInput = document.getElementById('regex').value;
+            let testString = document.getElementById('testString').value;
+            let outputDiv = document.getElementById('output');
+            let global = document.getElementById("global").checked;
+            let caseInsensitive = document.getElementById("case-insensitive").checked;
+            try {
+                let flags = "";
+                if (global) {
+                    flags += "g";
+                }
+                if (caseInsensitive) {
+                    flags += "i";
+                }
+                const regex = new RegExp(regexInput, flags);
+
+                if (regex.test(testString)) {
+                    const highlightedString = testString.replace(regex, match => `<span class="highlight-yellow">${match}</span>`);
+                    outputDiv.innerHTML = highlightedString;
+                }
+                else {
+                    outputDiv.innerHTML = "";
+                }
+            } catch (e) {
+                outputDiv.innerHTML = 'Invalid Regular Expression';
+            }
+        };
+        let license='MIT License\n\nCopyright (c) 2024 Gary Davenport\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.'
+    </script>
+</body>
+
+</html>
